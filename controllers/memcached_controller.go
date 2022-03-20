@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	cachev1alpha1 "github.com/example/memcached-operator/api/v1alpha1"
@@ -191,8 +192,10 @@ func getPodNames(pods []corev1.Pod) []string {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *MemcachedReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&cachev1alpha1.Memcached{}).
+	return ctrl.
+		NewControllerManagedBy(mgr).     // provides a controller builder that allows various controller configurations
+		For(&cachev1alpha1.Memcached{}). // specifies the Memcached type as the primary resource to watch
 		Owns(&appsv1.Deployment{}).
+		WithOptions(controller.Options{MaxConcurrentReconciles: 2}). // default number of reconcile loops is 1
 		Complete(r)
 }
